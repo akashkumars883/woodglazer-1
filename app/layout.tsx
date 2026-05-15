@@ -9,6 +9,7 @@ import { Toaster } from "sonner";
 import Script from "next/script";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import CookieBanner from "@/components/CookieBanner";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -124,6 +125,7 @@ export default function RootLayout({
         <SiteLayoutWrapper>
           {children}
         </SiteLayoutWrapper>
+        <SpeedInsights />
       </body>
     </html>
   );
