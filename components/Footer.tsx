@@ -150,7 +150,7 @@ export default function Footer() {
           <div className="flex gap-8 text-stone-500 text-xs font-medium">
             <Link href="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link>
             <Link href="/terms-of-service" className="hover:text-primary transition-colors">Terms of Service</Link>
-            <Link href="/sitemap.xml" className="hover:text-primary transition-colors">Sitemap</Link>
+            <Link href="/sitemap" className="hover:text-primary transition-colors">Sitemap</Link>
           </div>
         </div>
       </div>
