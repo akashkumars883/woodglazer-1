@@ -56,6 +56,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
+  const premiumLocalities = [
+    "dlf-phase-1-gurgaon",
+    "golf-course-road-gurgaon",
+    "sohna-road-gurgaon",
+    "vasant-kunj-delhi",
+    "greater-kailash-delhi",
+    "noida-sector-62",
+  ];
+
   // Fetch real service data from Supabase for sitemap
   const { data: services } = await supabase
     .from("service_categories")
@@ -71,13 +80,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       images: [absoluteUrl(getServiceSeoImage(service.slug))],
     };
 
-    const subServiceRoutes = (service.sub_services || []).map((subService: { slug: string }) => ({
-      url: absoluteUrl(`/services/${service.slug}/${subService.slug}`),
-      lastModified,
-      changeFrequency: "monthly" as const,
-      priority: 0.7,
-      images: [absoluteUrl(getServiceSeoImage(service.slug))],
-    }));
+    const subServiceRoutes = (service.sub_services || []).flatMap((subService: { slug: string }) => {
+      const mainSubRoute: MetadataRoute.Sitemap[number] = {
+        url: absoluteUrl(`/services/${service.slug}/${subService.slug}`),
+        lastModified,
+        changeFrequency: "monthly" as const,
+        priority: 0.7,
+        images: [absoluteUrl(getServiceSeoImage(service.slug))],
+      };
+
+      const localityRoutes = premiumLocalities.map((locality) => ({
+        url: absoluteUrl(`/services/${service.slug}/${subService.slug}/${locality}`),
+        lastModified,
+        changeFrequency: "monthly" as const,
+        priority: 0.6,
+        images: [absoluteUrl(getServiceSeoImage(service.slug))],
+      }));
+
+      return [mainSubRoute, ...localityRoutes];
+    });
 
     return [parentRoute, ...subServiceRoutes];
   });

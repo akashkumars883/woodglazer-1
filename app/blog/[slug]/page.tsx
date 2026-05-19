@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { buildMetadata, createBlogNode, createBreadcrumbNode } from "@/lib/seo";
+import { buildMetadata, createBlogNode, createBreadcrumbNode, insertContextualLinks } from "@/lib/seo";
 import { StructuredData } from "@/components/StructuredData";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -155,7 +155,7 @@ export default async function BlogDetails({ params }: { params: Promise<{ slug: 
               {/* Blog Content */}
               <div 
                 className="prose prose-stone prose-lg max-w-none prose-headings:text-secondary prose-headings:font-black prose-headings:mt-8 prose-headings:mb-3 prose-p:text-stone-600 prose-p:leading-relaxed prose-p:my-3 prose-li:text-stone-600 prose-li:my-1.5 prose-strong:text-secondary prose-img:rounded-3xl"
-                dangerouslySetInnerHTML={{ __html: formattedBlog.content }} 
+                dangerouslySetInnerHTML={{ __html: insertContextualLinks(formattedBlog.content) }} 
               />
               
               {/* Share section */}

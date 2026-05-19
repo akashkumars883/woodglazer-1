@@ -53,7 +53,7 @@ export default function AboutPage() {
                   At Wood Glazer, we do not simply polish wood. We restore its soul. Every knot, every grain, every subtle variation in texture tells the story of the tree it came from — and our mission is to honour and amplify that story with skill, care, and precision.
                 </p>
                 <p className="mt-6 text-stone-600 leading-relaxed font-medium">
-                  Founded and based in Faridabad, Haryana, Wood Glazer has grown from a small carpentry workshop into one of Delhi NCR's most trusted names in premium wood finishing and interior fit-out. Over 15 years of hands-on work and more than 500 completed projects later, our belief remains the same: every wooden surface deserves the finest treatment available.
+                  Founded and based in Faridabad, Haryana, Wood Glazer has grown from a small carpentry workshop into one of {"Delhi NCR's"} most trusted names in premium wood finishing and interior fit-out. Over 15 years of hands-on work and more than 500 completed projects later, our belief remains the same: every wooden surface deserves the finest treatment available.
                 </p>
                 <p className="mt-6 text-stone-600 leading-relaxed font-medium">
                   Whether it is a centuries-old heirloom passed down through generations, a freshly installed modular kitchen, a sleek corporate office fit-out, or the warm dining space of a restaurant, our master craftsmen approach every project with the same reverence and commitment to excellence.

@@ -14,10 +14,11 @@ interface ActionResponse {
 
 // --- Auth Actions ---
 
-export async function loginAdmin(password: string) {
+export async function loginAdmin(email: string, password: string) {
+  const adminEmail = process.env.ADMIN_EMAIL || "admin@woodglazer.com";
   const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
   
-  if (password === adminPassword) {
+  if (email.trim().toLowerCase() === adminEmail.trim().toLowerCase() && password === adminPassword) {
     const cookieStore = await cookies();
     cookieStore.set("admin_session", "true", {
       httpOnly: true,
@@ -29,7 +30,7 @@ export async function loginAdmin(password: string) {
     return { success: true };
   }
   
-  return { success: false, error: "Incorrect password" };
+  return { success: false, error: "Incorrect email or password" };
 }
 
 export async function logoutAdmin() {
@@ -383,8 +384,8 @@ export async function incrementVisitorCount() {
       const val = existing.value as { count?: number } | number;
       if (typeof val === "number") {
         currentCount = val;
-      } else if (val && typeof (val as any).count === "number") {
-        currentCount = (val as any).count;
+      } else if (val && typeof val === "object" && typeof val.count === "number") {
+        currentCount = val.count;
       }
     }
 
@@ -605,5 +606,137 @@ Each object must have exactly these keys:
     return { success: false, error: "Failed to parse AI output. Please try again." };
   }
 }
+
+export async function generateAndPublishAIBlogPost(): Promise<ActionResponse & { title?: string; slug?: string }> {
+  try {
+    // 1. Verify admin session cookie to secure it
+    const cookieStore = await cookies();
+    const session = cookieStore.get("admin_session");
+    if (!session || session.value !== "true") {
+      return { success: false, error: "Unauthorized access" };
+    }
+
+    // 2. Fetch existing titles
+    const { data: existingPosts, error: fetchError } = await supabase
+      .from("blog_posts")
+      .select("title");
+
+    if (fetchError) {
+      console.error("Failed to fetch existing blog titles:", fetchError);
+      return { success: false, error: fetchError.message };
+    }
+
+    const existingTitles = (existingPosts || []).map(p => p.title);
+
+    // 3. Request 2 Fresh, Unique SEO Topic Suggestions from AI
+    const topicResult = await suggestNewBlogTopics(existingTitles);
+    if (!topicResult.success || !topicResult.suggestions || topicResult.suggestions.length === 0) {
+      return { success: false, error: topicResult.error || "Failed to get AI topic suggestions" };
+    }
+
+    const selectedTopic = topicResult.suggestions[0];
+
+    // 4. Generate the Long-Form SEO-Optimized Article Content in HTML
+    const prompt = `Write a masterfully crafted, 1000-1200 words long, deeply detailed and search-optimized article in natural, conversational, professional human English for a blog post titled "${selectedTopic.title}" under the category "${selectedTopic.category}". 
+
+SEO Meta Description to optimize for: "${selectedTopic.description}".
+
+Apply these critical formatting guidelines:
+1. Return ONLY pure, raw renderable HTML (<h2>, <h3>, <p>, <ul>, <li>, <strong>). Do NOT wrap output inside markdown code blocks (such as \`\`\`html).
+2. Write with the voice of an elite wood polishing and carpentry expert (15+ years experience).
+3. Do NOT use standard robotic AI transitions or clichés ("delve", "testament", "revolutionary", "moreover", "in conclusion", "furthermore"). Keep it natural, organic, and engaging.`;
+
+    const articleResult = await generateAIContent(prompt, false);
+    if (!articleResult.success || !articleResult.text) {
+      return { success: false, error: articleResult.error || "Failed to generate blog post content" };
+    }
+
+    const htmlContent = articleResult.text;
+
+    // 5. Select Category-Specific Premium Unsplash Cover Images dynamically via API
+    const image = await fetchUnsplashImage(selectedTopic.title, selectedTopic.category);
+
+    // 6. Generate Clean Slug and Calculate Stats
+    const slug = selectedTopic.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
+    const wordCount = htmlContent.replace(/<[^>]+>/g, '').trim().split(/\s+/).filter(Boolean).length;
+    const readTime = Math.ceil(wordCount / 200) + " min read";
+
+    // 7. Save to Database and Revalidate Next.js Cache Automatically
+    const saveResult = await saveBlogPost({
+      title: selectedTopic.title,
+      slug,
+      category: selectedTopic.category,
+      description: selectedTopic.description,
+      content: htmlContent,
+      image,
+      author: "Wood Glazer Expert",
+      read_time: readTime,
+      featured: false
+    });
+
+    if (!saveResult.success) {
+      return { success: false, error: saveResult.error };
+    }
+
+    // Force revalidation for instant update
+    revalidatePath("/admin/blog");
+    revalidatePath("/blog");
+    revalidatePath(`/blog/${slug}`);
+
+    return { success: true, title: selectedTopic.title, slug };
+  } catch (err: unknown) {
+    console.error("Unexpected error in generateAndPublishAIBlogPost:", err);
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export async function fetchUnsplashImage(query: string, category: string): Promise<string> {
+  const accessKey = "1e2vo2W2GSZpxjW3Wbxb7JhQjQ_T0KbvqWlt0azwZYw";
+  
+  // Clean query to get premium, highly specific wood craftsmanship/interior results
+  const searchQuery = `${query} ${category} wood design`.trim();
+  
+  try {
+    console.log(`Querying Unsplash API for: "${searchQuery}"...`);
+    const response = await fetch(
+      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(searchQuery)}&per_page=1&orientation=landscape`,
+      {
+        headers: {
+          Authorization: `Client-ID ${accessKey}`,
+        },
+      }
+    );
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data.results && data.results.length > 0) {
+        const imageUrl = data.results[0].urls.regular;
+        console.log(`Unsplash API search success: ${imageUrl}`);
+        return imageUrl;
+      }
+    } else {
+      console.error(`Unsplash API search error status: ${response.status}`);
+    }
+  } catch (err) {
+    console.error("Failed to fetch image from Unsplash API:", err);
+  }
+  
+  // Safe Fallback Category-Specific Premium Unsplash Images
+  console.log(`Using premium static fallback cover image for category: ${category}`);
+  const categoryImages: Record<string, string> = {
+    "Wood Polishing": "https://images.unsplash.com/photo-1538688549894-f44af883acbb?q=80&w=2000",
+    "Carpentry": "https://images.unsplash.com/photo-1581428982868-e410dd047a90?q=80&w=2000",
+    "Interior Design": "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?q=80&w=2000",
+    "Lifestyle": "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=2000"
+  };
+  
+  return categoryImages[category] || categoryImages["Wood Polishing"];
+}
+
+
 
 
