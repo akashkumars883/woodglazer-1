@@ -84,7 +84,7 @@ export function buildMetadata({
           url: absoluteImage,
           width: 1600,
           height: 900,
-          alt: title,
+          alt: `${title} - Premium Wood Craftsmanship & Finishing by Wood Glazer`,
         },
       ],
     },
@@ -282,3 +282,41 @@ export function createBlogNode(blog: BlogPost): SchemaNode {
     inLanguage: "en",
   };
 }
+
+export function insertContextualLinks(html: string): string {
+  if (!html) return "";
+  
+  const linkMap = [
+    { keywords: ["pu paint", "pu polishing", "pu polish"], url: "/services/wood-polishing-services/pu-paint-pu-polishing" },
+    { keywords: ["melamine polishing", "melamine polish", "melamine finish"], url: "/services/wood-polishing-services/melamine-polishing" },
+    { keywords: ["deco paint", "deco painting", "deco finish"], url: "/services/wood-polishing-services/deco-paint" },
+    { keywords: ["polyester polishing", "polyester polish", "lamination", "laminated wood"], url: "/services/wood-polishing-services/polyester-polishing-lamination" },
+    { keywords: ["residential carpentry", "home carpentry"], url: "/services/carpentry-services/residential-carpentry" },
+    { keywords: ["commercial carpentry", "office carpentry"], url: "/services/carpentry-services/commercial-carpentry" },
+    { keywords: ["wood polishing", "wood polishing services"], url: "/services/wood-polishing-services" },
+    { keywords: ["carpentry", "carpentry services"], url: "/services/carpentry-services" },
+  ];
+  
+  let text = html;
+  
+  linkMap.forEach(({ keywords, url }) => {
+    for (const kw of keywords) {
+      const escapedKw = kw.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const regex = new RegExp(`(?<!<[^>]*)\\b(${escapedKw})\\b(?![^<]*<\/a>)`, "gi");
+      
+      let matched = false;
+      text = text.replace(regex, (match) => {
+        if (!matched) {
+          matched = true;
+          return `<a href="${url}" class="text-primary font-bold hover:underline decoration-2 underline-offset-4">${match}</a>`;
+        }
+        return match;
+      });
+      
+      if (matched) break;
+    }
+  });
+  
+  return text;
+}
+

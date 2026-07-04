@@ -14,7 +14,7 @@ import {
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { deleteBlogPost, suggestNewBlogTopics } from "../actions";
+import { deleteBlogPost, suggestNewBlogTopics, generateAndPublishAIBlogPost } from "../actions";
 import { supabase } from "@/lib/supabase";
 
 interface BlogPost {
@@ -51,6 +51,7 @@ export default function BlogAdminPage() {
 
   const [suggestions, setSuggestions] = useState<{ title: string; category: string; reason: string; seoScore: string; description?: string }[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [autoGenerating, setAutoGenerating] = useState(false);
 
   const handleGetSuggestions = async () => {
     setLoadingSuggestions(true);
@@ -58,8 +59,14 @@ export default function BlogAdminPage() {
       const existingTitles = blogs.map(b => b.title);
       const result = await suggestNewBlogTopics(existingTitles);
       if (result.success && result.suggestions) {
-        // Enforce 100% compliant boundaries programmatically (Safe-fail Fallback)
-        const validated = result.suggestions.map((item: any) => {
+        interface SuggestedTopic {
+          title?: string;
+          category?: string;
+          reason?: string;
+          seoScore?: string;
+          description?: string;
+        }
+        const validated = (result.suggestions as SuggestedTopic[]).map((item: SuggestedTopic) => {
           let title = (item.title || "").trim();
           let description = (item.description || "").trim();
 
@@ -124,9 +131,11 @@ export default function BlogAdminPage() {
           }
 
           return {
-            ...item,
             title,
-            description
+            description,
+            category: (item.category || "Wood Polishing").trim(),
+            reason: (item.reason || "High demand keyword").trim(),
+            seoScore: (item.seoScore || "High").trim()
           };
         });
         setSuggestions(validated);
@@ -151,6 +160,28 @@ export default function BlogAdminPage() {
     }
   };
 
+  const handleAutoGenerate = async () => {
+    setAutoGenerating(true);
+    try {
+      const result = await generateAndPublishAIBlogPost();
+      if (result.success) {
+        alert(`Success! AI has generated and published a new blog post:\n\n"${result.title}"`);
+        // Refresh blogs list
+        const { data } = await supabase
+          .from("blog_posts")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (data) setBlogs(data as BlogPost[]);
+      } else {
+        alert("Error generating blog: " + result.error);
+      }
+    } catch (err: unknown) {
+      alert("Error: " + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setAutoGenerating(false);
+    }
+  };
+
   return (
     <div className="space-y-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -158,13 +189,23 @@ export default function BlogAdminPage() {
            <h1 className="text-3xl font-semibold text-secondary">Blog Posts</h1>
            <p className="text-stone-500 font-medium">Manage your articles, guides, and news updates.</p>
         </div>
-        <Link 
-          href="/admin/blog/new"
-          className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-primary/20 hover:scale-105 transition-transform self-start sm:self-center"
-        >
-           <Plus className="w-5 h-5" />
-           Write New Post
-        </Link>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <button 
+            onClick={handleAutoGenerate}
+            disabled={autoGenerating}
+            className="inline-flex items-center justify-center gap-2 bg-stone-900 border border-stone-800 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 hover:bg-stone-850 transition-all disabled:opacity-50 disabled:hover:scale-100 cursor-pointer self-start sm:self-center"
+          >
+             {autoGenerating ? <Loader2 className="w-5 h-5 animate-spin text-primary" /> : <Sparkles className="w-5 h-5 text-primary animate-pulse" />}
+             {autoGenerating ? "AI Writing & Posting..." : "Write & Post with AI Now"}
+          </button>
+          <Link 
+            href="/admin/blog/new"
+            className="inline-flex items-center justify-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-primary/20 hover:scale-105 transition-transform self-start sm:self-center"
+          >
+             <Plus className="w-5 h-5" />
+             Write New Post
+          </Link>
+        </div>
       </div>
 
       {/* AI Daily Topic Recommendations Card */}
@@ -179,7 +220,7 @@ export default function BlogAdminPage() {
              </div>
              <h2 className="text-2xl font-bold tracking-tight">Need a fresh topic? Get daily suggestions!</h2>
              <p className="text-stone-300 text-sm leading-relaxed">
-                Our AI analyzes your active blogs, matches them with Google trending keywords, and suggests brand-new topics for Wood Glazer that you haven't published yet.
+                Our AI analyzes your active blogs, matches them with Google trending keywords, and suggests brand-new topics for Wood Glazer that you {"haven't"} published yet.
              </p>
           </div>
           <button 

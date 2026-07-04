@@ -12,12 +12,23 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "images.unsplash.com",
+        pathname: "/**",
       },
       {
         protocol: "https",
         hostname: "plus.unsplash.com",
+        pathname: "/**",
       },
     ],
+  },
+  async redirects() {
+    return [
+      {
+        source: "/cgi-sys/:path*",
+        destination: "/",
+        permanent: true,
+      },
+    ];
   },
 };
 

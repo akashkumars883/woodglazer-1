@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import CTASection from "@/components/CTASection";
 import ImageSlider from "@/components/ImageSlider";
 import { StructuredData } from "@/components/StructuredData";
+import FAQSection from "@/components/FAQSection";
 import {
   buildMetadata,
   createBreadcrumbNode,
@@ -467,7 +468,7 @@ export default async function NestedServicePage({
                       {subService.title}
                     </h3>
                     <p className="text-stone-500 text-sm mt-3 leading-relaxed">
-                      Executed and detailed to perfection by Wood Glazer's master team of skilled artisans using premium-grade materials and industry-best processes.
+                      Executed and detailed to perfection by {"Wood Glazer's"} master team of skilled artisans using premium-grade materials and industry-best processes.
                     </p>
                   </div>
                 </div>
@@ -529,6 +530,9 @@ export default async function NestedServicePage({
           </div>
         </div>
       </section>
+
+      {/* FAQ Section */}
+      <FAQSection categorySlug={parentService.slug} />
 
       {/* CTA Section */}
       <CTASection />

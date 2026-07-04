@@ -4,10 +4,11 @@ import { useState } from "react";
 import { loginAdmin } from "../actions";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Lock, ShieldCheck, Loader2, Sparkles, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Lock, ShieldCheck, Loader2, Sparkles, ArrowRight, Eye, EyeOff, Mail } from "lucide-react";
 import { siteConfig } from "@/lib/site";
 
 export default function LoginPage() {
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +21,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const result = await loginAdmin(password);
+      const result = await loginAdmin(email, password);
       if (result.success) {
         router.push("/admin");
         router.refresh();
@@ -67,6 +68,34 @@ export default function LoginPage() {
 
           {/* Form Section */}
           <form onSubmit={handleLogin} className="px-8 sm:px-10 pb-12 space-y-6">
+            {/* Email Field */}
+            <div className="space-y-2">
+               <div className="flex items-center justify-between ml-1 text-[12px] font-semibold text-muted">
+                  <label htmlFor="admin-email" className="flex items-center gap-1.5">
+                    <Mail className="w-3.5 h-3.5 text-primary" />
+                    Email Address
+                  </label>
+               </div>
+               
+               <div className="relative group/input">
+                 <div className="absolute left-5 top-1/2 -translate-y-1/2 text-muted group-focus-within/input:text-primary transition-colors">
+                   <Mail className="w-4 h-4" />
+                 </div>
+                 
+                 <input 
+                   required
+                   id="admin-email"
+                   type="email" 
+                   placeholder="admin@woodglazer.com"
+                   className="w-full bg-surface border border-border rounded-xl pl-12 pr-6 py-4 text-secondary placeholder:text-stone-350 focus:border-primary focus:bg-white focus:ring-4 focus:ring-ring transition-all outline-none text-sm font-medium"
+                   value={email}
+                   onChange={(e) => setEmail(e.target.value)}
+                   autoFocus
+                 />
+               </div>
+            </div>
+
+            {/* Password Field */}
             <div className="space-y-2 relative">
                <div className="flex items-center justify-between ml-1 text-[12px] font-semibold text-muted">
                   <label htmlFor="admin-key" className="flex items-center gap-1.5">
@@ -85,10 +114,9 @@ export default function LoginPage() {
                    id="admin-key"
                    type={showPassword ? "text" : "password"} 
                    placeholder="Enter your password"
-                   className="w-full bg-surface border border-border rounded-xl pl-12 pr-12 py-4 text-secondary placeholder:text-stone-300 focus:border-primary focus:bg-white focus:ring-4 focus:ring-ring transition-all outline-none text-sm font-medium"
+                   className="w-full bg-surface border border-border rounded-xl pl-12 pr-12 py-4 text-secondary placeholder:text-stone-350 focus:border-primary focus:bg-white focus:ring-4 focus:ring-ring transition-all outline-none text-sm font-medium"
                    value={password}
                    onChange={(e) => setPassword(e.target.value)}
-                   autoFocus
                  />
 
                  <button
@@ -112,7 +140,7 @@ export default function LoginPage() {
                )}
             </div>
 
-            <div className="pt-4">
+            <div className="pt-6">
                <button 
                  disabled={loading}
                  type="submit"
@@ -122,7 +150,7 @@ export default function LoginPage() {
                     <Loader2 className="w-4 h-4 animate-spin" />
                  ) : (
                     <>
-                      Verify Password
+                      Login to Dashboard
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                     </>
                  )}

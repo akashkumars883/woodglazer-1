@@ -5,6 +5,26 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Cookie, Settings, Check, X, Shield, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 
+const GA_ID = "G-GHH86XW9XG";
+
+const applyConsent = (consent: { necessary: boolean; analytics: boolean; marketing: boolean }) => {
+  if (typeof window !== "undefined") {
+    // Real Google Analytics opt-out trigger
+    (window as unknown as { [key: string]: unknown })[`ga-disable-${GA_ID}`] = !consent.analytics;
+
+    // Push custom event to GTM dataLayer if present
+    const dataLayer = (window as unknown as { dataLayer?: unknown[] }).dataLayer;
+    if (dataLayer) {
+      dataLayer.push({
+        event: "consent_configured",
+        consent_necessary: consent.necessary,
+        consent_analytics: consent.analytics,
+        consent_marketing: consent.marketing,
+      });
+    }
+  }
+};
+
 export default function CookieBanner() {
   const [isOpen, setIsOpen] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -13,8 +33,6 @@ export default function CookieBanner() {
     analytics: true,
     marketing: false,
   });
-
-  const GA_ID = "G-GHH86XW9XG";
 
   useEffect(() => {
     // Run only on client side to avoid SSR mismatch
@@ -26,31 +44,17 @@ export default function CookieBanner() {
     } else {
       try {
         const consent = JSON.parse(savedConsent);
-        setPreferences(consent);
-        applyConsent(consent);
+        setTimeout(() => {
+          setPreferences(consent);
+          applyConsent(consent);
+        }, 0);
       } catch (e) {
-        setIsOpen(true);
+        setTimeout(() => {
+          setIsOpen(true);
+        }, 0);
       }
     }
   }, []);
-
-  const applyConsent = (consent: typeof preferences) => {
-    if (typeof window !== "undefined") {
-      // Real Google Analytics opt-out trigger
-      (window as any)[`ga-disable-${GA_ID}`] = !consent.analytics;
-
-      // Push custom event to GTM dataLayer if present
-      const dataLayer = (window as any).dataLayer;
-      if (dataLayer) {
-        dataLayer.push({
-          event: "consent_configured",
-          consent_necessary: consent.necessary,
-          consent_analytics: consent.analytics,
-          consent_marketing: consent.marketing,
-        });
-      }
-    }
-  };
 
   const handleAcceptAll = () => {
     const allAccepted = {

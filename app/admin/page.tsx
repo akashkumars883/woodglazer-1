@@ -61,7 +61,15 @@ export default async function AdminDashboard() {
     .order("created_at", { ascending: false })
     .limit(5);
 
-  const realUpdates = (recentSubServices || []).map((sub: any) => ({
+  interface SubServiceWithCategory {
+    title: string;
+    created_at: string;
+    service_categories: {
+      title: string;
+    } | null;
+  }
+
+  const realUpdates = ((recentSubServices || []) as unknown as SubServiceWithCategory[]).map((sub) => ({
     title: sub.title,
     category: sub.service_categories?.title || "Specialty Woodwork",
     status: "Published",
@@ -89,8 +97,8 @@ export default async function AdminDashboard() {
     const val = visitsData.value as { count?: number } | number;
     if (typeof val === "number") {
       realVisits = val;
-    } else if (val && typeof (val as any).count === "number") {
-      realVisits = (val as any).count;
+    } else if (val && typeof val === "object" && typeof val.count === "number") {
+      realVisits = val.count;
     }
   }
 
