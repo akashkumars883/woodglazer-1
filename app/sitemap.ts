@@ -5,6 +5,8 @@ import { absoluteUrl, getDynamicSiteConfig } from "@/lib/site";
 
 const lastModified = new Date();
 
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const config = await getDynamicSiteConfig();
