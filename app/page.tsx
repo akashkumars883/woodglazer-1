@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 import FAQ from "@/components/FAQ";
 import { Hero } from "@/components/Hero";

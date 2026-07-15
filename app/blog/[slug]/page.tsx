@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 import { buildMetadata, createBlogNode, createBreadcrumbNode, insertContextualLinks } from "@/lib/seo";
 import { StructuredData } from "@/components/StructuredData";

@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 import { buildMetadata } from "@/lib/seo";
 import { FadeIn } from "@/components/Motion";

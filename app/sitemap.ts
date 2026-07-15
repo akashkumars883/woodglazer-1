@@ -5,7 +5,7 @@ import { absoluteUrl, getDynamicSiteConfig } from "@/lib/site";
 
 const lastModified = new Date();
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
